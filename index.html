@@ -1,12 +1,14 @@
 import logging
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, BotCommand
-from telegram.ext import (
-    Application, CommandHandler, CallbackQueryHandler, 
-    MessageHandler, filters, ContextTypes  # 👈 ЭТО ВАЖНО! Добавьте эту строку
-)
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo  # WebAppInfo - ЭТО ВАЖНО!
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
+import logging
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
 # Токен вашего бота
 TOKEN = "8209840970:AAGBg2IysOoNlzJJXp2F7G3g9lRb_Q9H1V8"
+WEB_APP_URL ="https://shapitoovich.github.io/Journ-app/"
+
 
 # Включаем логирование
 logging.basicConfig(
@@ -23,29 +25,38 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     logger.info(f"Пользователь {user.id} запустил бота")
     
-    # Приветственное сообщение
-    welcome_text = (
+
+    await update.message.reply_text(
+        "👋 Нажмите кнопку, чтобы открыть приложение:",
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
+    # Создаем меню
+keyboard = [
+        [InlineKeyboardButton(
+            "📚 ОТКРЫТЬ ЖУРНАЛЫ", 
+            web_app=WebAppInfo(url=WEB_APP_URL)  # ЭТО ГЛАВНОЕ!
+        )],
+        [InlineKeyboardButton("⭐ Избранное", callback_data='favorites')],
+        [InlineKeyboardButton("ℹ️ О боте", callback_data='about')]
+    ]
+
+reply_markup = InlineKeyboardMarkup(keyboard)
+
+await update.message.reply_text(
         f"👋 <b>Привет, {user.first_name}!</b>\n\n"
-        f"Я бот для чтения журналов 📚\n"
-        f"Выберите действие в меню ниже:"
+        f"Нажмите кнопку, чтобы открыть приложение:",
+        reply_markup=reply_markup,
+        parse_mode='HTML'
     )
     
-    # Создаем меню
-    keyboard = [
-        [InlineKeyboardButton("📚 Категории журналов", callback_data='categories')],
-        [InlineKeyboardButton("⭐ Избранное", callback_data='favorites')],
-        [InlineKeyboardButton("📖 История чтения", callback_data='history')],
-        [InlineKeyboardButton("🔍 Поиск", callback_data='search')],
-        [InlineKeyboardButton("ℹ️ О боте", callback_data='about')],
-    ]
     
     # Если пользователь админ, добавляем кнопку админ-панели
-    if user.id in ADMIN_IDS:
+if user.id in ADMIN_IDS:
         keyboard.append([InlineKeyboardButton("👑 Админ панель", callback_data='admin')])
     
-    reply_markup = InlineKeyboardMarkup(keyboard)
+reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await update.message.reply_text(
+await update.message.reply_text(
         welcome_text,
         reply_markup=reply_markup,
         parse_mode='HTML'
@@ -57,23 +68,55 @@ async def menu_button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
     logger.info(f"Пользователь {user.id} нажал кнопку Меню")
     
     keyboard = [
-        [InlineKeyboardButton("📚 Категории журналов", callback_data='categories')],
+        [InlineKeyboardButton("📚 ОТКРЫТЬ ЖУРНАЛЫ", web_app=WebAppInfo(url=WEB_APP_URL))],
         [InlineKeyboardButton("⭐ Избранное", callback_data='favorites')],
-        [InlineKeyboardButton("📖 История чтения", callback_data='history')],
-        [InlineKeyboardButton("🔍 Поиск", callback_data='search')],
-        [InlineKeyboardButton("ℹ️ О боте", callback_data='about')],
+        [InlineKeyboardButton("ℹ️ О боте", callback_data='about')]
     ]
+
+    await update.message.reply_text(
+        f"👋 <b>Привет, {user.first_name}!</b>\n\nНажмите кнопку, чтобы открыть приложение:",
+        reply_markup=InlineKeyboardMarkup(keyboard),
+        parse_mode='HTML'
+    )
+
+async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    if query.data == 'favorites':
+        await query.edit_message_text("⭐ Избранное пока пусто")
+    elif query.data == 'about':
+        await query.edit_message_text("ℹ️ Бот для чтения журналов v1.0")
+
+def main():
+    app = Application.builder().token(TOKEN).build()
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CallbackQueryHandler(button_handler))
+
+    print("✅ Бот запущен! Напишите /start")
+    app.run_polling()
+
+if name == 'main':
+    main()
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    async def update.message.reply_text(
+        f"👋 <b>Привет, {user.first_name}!</b>\n\n"
+        f"Нажмите кнопку, чтобы открыть приложение:",
+        reply_markup=reply_markup,
+        parse_mode='HTML'
+    )
     
     if user.id in ADMIN_IDS:
         keyboard.append([InlineKeyboardButton("👑 Админ панель", callback_data='admin')])
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await update.message.reply_text(
+    async def update.message.reply_text()
         f"<b>Главное меню</b>\n\nВыберите раздел:",
         reply_markup=reply_markup,
         parse_mode='HTML'
-    )
+    
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Обработчик нажатий на инлайн-кнопки"""
